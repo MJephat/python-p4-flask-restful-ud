@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, request, make_response
+from flask import Flask,jsonify, request, make_response
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
 
@@ -9,7 +9,8 @@ from models import db, Newsletter
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newsletters.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.json.compact = False
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+app.json.compact = True
 
 migrate = Migrate(app, db)
 db.init_app(app)
@@ -25,7 +26,7 @@ class Home(Resource):
         }
         
         response = make_response(
-            response_dict,
+            jsonify(response_dict),
             200,
         )
 
@@ -42,6 +43,53 @@ class Newsletters(Resource):
         response = make_response(
             response_dict_list,
             200,
+        )
+
+        return response
+    def post(self):
+
+        new_record = Newsletter(
+            title = request.form['title'],
+            body=request.form['body'],
+        )
+
+        db.session.add(new_record)
+        db.session.commit()
+
+        response_dict = new_record.to_dict()
+
+        response = make_response(
+                jsonify(response_dict),
+        )
+        return response
+        api.add_resource(Newsletters, '/newsletters')
+
+
+    def patch(self, id):
+        rcord = Newsletter.query.filter_by(id=id).first()
+        for attr in request.form:
+            setatrr(record, attr,request.form[attr])
+
+            db.session.add(record)
+            db.session.commit()
+
+            response_dict =record.to_dict()
+            response = make_response(
+                jsonify(response_dict),
+                200
+            )
+
+            return response
+    def delete(self, id):
+        record = Newsletter.query.filter_by(id=id).first()
+
+        db.ession.delete(record)
+        db.sesson.commit()
+
+        response_dict = {"Message": "record deleted successfully"}
+        response = make_response(
+            jsonify(record.to_dict),
+            200
         )
 
         return response
